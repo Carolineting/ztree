@@ -158,8 +158,11 @@
                 onClick: function (event, treeId, treeNode) {
                     zTree = $.fn.zTree.getZTreeObj("menu_tree_right");
                 },
-                beforeRemove:function(){
-                    
+                beforeRemove: function(treeId, treeNode) {
+                    console.log('beforeRemove', treeId, treeNode);
+                },
+                onRemove: function (_, treeId, treeNode) {
+                    console.log('onRemove', treeId, treeNode);
                 }
             }
         };
@@ -181,6 +184,7 @@
         $(document).ready(function(){
             // 初始化 left tree,得到leftTree对象
             $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
+            
 //            $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
 
         });
@@ -204,7 +208,9 @@
             });
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
-
+            // 自动展开
+            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true); 
+            
             // 5 被添加到“已接收方”的叶子节点，在左侧不显示
 //            if (!nodesSelected.isParent) {
 //                global.leftTree.hideNode(selectedNode);
@@ -241,7 +247,8 @@
             rNodes.push(leftSelectedNode);
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
-
+            // 自动展开
+            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true); 
 
 //            if (!leftSelectedNode) return;
 //
