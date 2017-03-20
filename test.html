@@ -136,6 +136,8 @@
                 }
             }
         };
+        var rNodes=[];
+
         var settingRight = {
             data: {
                 simpleData: {
@@ -162,7 +164,9 @@
                     console.log('beforeRemove', treeId, treeNode);
                 },
                 onRemove: function (_, treeId, treeNode) {
-                    console.log('onRemove', treeId, treeNode);
+                    rNodes = rNodes.filter(function (node) {
+                      return node.name !== treeNode.name;
+                    });
                 }
             }
         };
@@ -188,7 +192,6 @@
 //            $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
 
         });
-        var rNodes=[];
         function addnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var nodesSelected=leftTree.getSelectedNodes()[0];
@@ -197,7 +200,9 @@
 
             // 已经添加到右侧的的节点名字
             var added = rNodes.map(function (node) { return node.name });
-
+            console.log('added in addnodes:', added);
+            console.log('nodesSelected in addnodes:', nodesSelected.name);
+            
             // 已经添加过的不添加
             if (added.indexOf(nodesSelected.name) !== -1) return;
 
@@ -240,7 +245,8 @@
 
             // 已经添加到右侧的的节点名字
             var added = rNodes.map(function (node) { return node.name });
-            
+            console.log('added in addAllnodes:', added);
+            console.log('leftSelectedNode in addAllnodes:', leftSelectedNode.name);
             // 不存在的才添加
             if (added.indexOf(leftSelectedNode.name) !== -1) return;
                 
