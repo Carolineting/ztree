@@ -187,23 +187,27 @@
         var rNodes=[];
         function addnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
-            var nodesSelected=leftTree.getSelectedNodes();
-            if(rNodes.indexOf(nodesSelected[0])==-1){
-                rNodes.push(nodesSelected[0]);
-                console.log(rNodes[0]);
+            var nodesSelected=leftTree.getSelectedNodes()[0];
 
-                console.log(rNodes[0]);
-                console.log(zNodes);
-            }
+            if (!nodesSelected) return;
 
+            // 已经添加到右侧的的节点名字
+            var added = rNodes.map(function (node) { return node.name });
+            console.log('added in addnodes:', added);
+            console.log('nodesSelected in addnodes:', nodesSelected.name);
 
-            var nodesSelectedWithoutChildren = rNodes.map(
-                    function (node) {
-                        return $.extend({}, node, { children: [] });
-             });
+            // 已经添加过的不添加
+            if (added.indexOf(nodesSelected.name) !== -1) return;
 
+            rNodes.push(nodesSelected);
 
-            $.fn.zTree.init($("#menu_tree_right"), settingRight,nodesSelectedWithoutChildren);
+            rNodes = rNodes.map(function (node) {
+                return $.extend({}, node, { children: [] });
+            });
+
+            console.log('init right tree with', rNodes.map((n) => n.name).join(', '));
+            
+            $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
 
             // 5 被添加到“已接收方”的叶子节点，在左侧不显示
 //            if (!nodesSelected.isParent) {
@@ -226,20 +230,26 @@
 
         function addAllnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
-            var leftSelectedNode = leftTree.getSelectedNodes();
+            var leftSelectedNode = leftTree.getSelectedNodes()[0];
+            
+            if (!leftSelectedNode) return;
+            
             var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
-            var newrNodes=[];
-            for(var i=0;i<rNodes.length;i++){
-                newrNodes.push(rNodes[i]);
-            }
-            // 已经添加到右侧的
-            var added = newrNodes.map(function (node) { return node.name });
 
+
+            // 已经添加到右侧的的节点名字
+            var added = rNodes.map(function (node) { return node.name });
+            console.log('added in addAllnodes:', added);
+            console.log('leftSelectedNode in addAllnodes:', leftSelectedNode.name);
+            
             // 不存在的才添加
-            if (added.indexOf(leftSelectedNode[0].name) == -1) {
-                rNodes.push(leftSelectedNode[0]);
-            }
-            $.fn.zTree.init($("#menu_tree_right"), settingRight,rNodes);
+            if (added.indexOf(leftSelectedNode.name) !== -1) return;
+                
+            rNodes.push(leftSelectedNode);
+
+            console.log('init right tree with', rNodes.map((n) => n.name).join(', '));
+
+            $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
 
 
 //            if (!leftSelectedNode) return;
