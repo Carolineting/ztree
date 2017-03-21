@@ -20,7 +20,7 @@
                     <td>接收方：</td>
                     <td>
                         <div>
-                            <input type="text" name="receiver" placeholder="所有用户" onclick="showmodel()"/>
+                            <input type="text" id="receiver" name="receiver" placeholder="所有用户" onclick="showmodel()"/>
                         </div>
                     </td>
                 </tr>
@@ -108,6 +108,7 @@
     </div>
 
     <script>
+
         function showmodel(){
             var model=document.getElementsByClassName('model')[0];
             model.style.display='block';
@@ -136,6 +137,8 @@
                 }
             }
         };
+
+
         var rNodes=[];
 
         var settingRight = {
@@ -171,7 +174,6 @@
             }
         };
 
-
         var zNodes = [
             { id:1, pId:0, name:"湖南省公安厅"},
             { id:11, pId:1, name:"长沙市公安局"},
@@ -188,14 +190,12 @@
         $(document).ready(function(){
             // 初始化 left tree,得到leftTree对象
             $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
-            
-//            $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
+//          $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
 
         });
         function addnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var nodesSelected=leftTree.getSelectedNodes()[0];
-
             if (!nodesSelected) return;
 
             // 已经添加到右侧的的节点名字
@@ -205,31 +205,27 @@
             
             // 已经添加过的不添加
             if (added.indexOf(nodesSelected.name) !== -1) return;
-
             rNodes.push(nodesSelected);
-
             rNodes = rNodes.map(function (node) {
                 return $.extend({}, node, { children: [] });
             });
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
-            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true); 
+           $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
+//         $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(nodesSelected,true,true,true);
             
-            // 5 被添加到“已接收方”的叶子节点，在左侧不显示
-//            if (!nodesSelected.isParent) {
-//                global.leftTree.hideNode(selectedNode);
-//            }
+
             if(nodesSelected.isParent){
                 $('.ztree li a.curSelectedNode').css({'color':'gray'});
             }
-//            checkbox的状态控制
+            //checkbox的状态控制
             var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
             if(rightTree.getNodes()!=[]){
                 $(':checkbox').attr("checked",false);
                 $(':checkbox').click(function(){
-                  $.fn.zTree.init($("#menu_tree_Right"), settingRight, []);
-                  $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
+                  $.fn.zTree.init($("#menu_tree_right"), settingRight,[]);
+                  $.fn.zTree.init($("#menu_tree_left"), settingLeft,zNodes);
                 });
             }
         }
@@ -240,54 +236,57 @@
             var leftSelectedNode = leftTree.getSelectedNodes()[0];
             
             if (!leftSelectedNode) return;
-            
-            var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
-
+            if (!(leftSelectedNode.isParent)){
+                $('#addAll').attr('disabled',true);
+            }
             // 已经添加到右侧的的节点名字
             var added = rNodes.map(function (node) { return node.name });
             console.log('added in addAllnodes:', added);
             console.log('leftSelectedNode in addAllnodes:', leftSelectedNode.name);
             // 不存在的才添加
             if (added.indexOf(leftSelectedNode.name) !== -1) return;
-                
             rNodes.push(leftSelectedNode);
-
+//          $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(leftSelectedNode,false,true,true);
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
-            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true); 
-
-//            if (!leftSelectedNode) return;
-//
-//            if (!leftSelectedNode[0].isParent) {
-//                var addAll=document.getElementById('addAll');
-//                addAll.onclick=function(){
-//                    addAll.setAttribute('disabled','true');
-//                }
-//
-//                console.log(leftSelectedNode[0].isParent)
-//
-//                return ;
-//            }
-//
-//            if(leftSelectedNode[0].isParent){
-//                $('.ztree li a.curSelectedNode').css({'color':'gray'});
-//            }
-//            //checkbox的状态控制
-//            if(rightTree.getNodes()!=[]){
-//                $(':checkbox').attr("checked",false);
-//                $(':checkbox').click(function(){
-//                    $.fn.zTree.init($("#menu_tree_Right"), settingRight, []);
-//                    $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
-//                });
-//            }
-
+            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
+            if(leftSelectedNode.isParent){
+                $('.ztree li a.curSelectedNode').css({'color':'gray'});
+            }
+            //checkbox的状态控制
+            var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
+            if(rightTree.getNodes()!=[]){
+                $(':checkbox').attr("checked",false);
+                $(':checkbox').click(function(){
+                    $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
+                    $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
+                });
+            }
         }
-		
-//		$('#ensure').click(function(){
-//			var right= $.fn.zTree.getZTreeObj("menu_tree_right");
-//			console.log(right.getSelectedNodes()+'bb');
-//			closemodel();
-//		});
+
+        
+        $('#ensure').click(function(){
+            closemodel();
+            var a=[],b=[],c=[]
+            for(var i=0;i<rNodes.length;i++){
+                a.push(rNodes[i].name);
+                console.log(a);
+                if(rNodes[i].children!==[]){
+                    for(var j=0;j<rNodes[i].children.length;j++){
+                        b.push(rNodes[i].children[j].name);
+                        if(rNodes[i].children[j].children){
+                            for(var k=0;k<rNodes[i].children[j].children.length;k++){
+                                c.push(rNodes[i].children[j].children[k].name);
+                                console.log(c);
+
+                            }
+                        }
+                    }
+                };
+            }
+            var total = a.concat(b,c);
+            $('#receiver').val(total);
+        });
 
     </script>
 </body>
