@@ -195,14 +195,8 @@
             var nodesSelected=leftTree.getSelectedNodes()[0];
             if (!nodesSelected) return;
 
-            // 已经添加到右侧的的节点名字
-            var added = rNodes.map(function (node) { return node.name });
-            console.log('added in addnodes:', added);
-            console.log('nodesSelected in addnodes:', nodesSelected.name);
-            
-            // 已经添加过的不添加
-            if (added.indexOf(nodesSelected.name) !== -1) return;
-            rNodes.push(nodesSelected);
+            addToNodes(rNodes, nodesSelected);
+
             rNodes = rNodes.map(function (node) {
                 return $.extend({}, node, { children: [] });
             });
@@ -227,7 +221,7 @@
             }
         }
 
-
+        
         function addAllnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var leftSelectedNode = leftTree.getSelectedNodes()[0];
@@ -236,13 +230,10 @@
             if (!(leftSelectedNode.isParent)){
                 $('#addAll').attr('disabled',true);
             }
-            // 已经添加到右侧的的节点名字
-            var added = rNodes.map(function (node) { return node.name });
-            console.log('added in addAllnodes:', added);
-            console.log('leftSelectedNode in addAllnodes:', leftSelectedNode.name);
-            // 不存在的才添加
-            if (added.indexOf(leftSelectedNode.name) !== -1) return;
-            rNodes.push(leftSelectedNode);
+            
+            
+            addToNodes(rNodes, leftSelectedNode);
+
 //          $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(leftSelectedNode,false,true,true);
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
@@ -284,6 +275,29 @@
             var total = a.concat(b,c);
             $('#receiver').val(total);
         });
+        
+        /**
+         * 把选中的节点加入 Nodes
+         * 注意该函数会改变入参 Nodes 
+         * @param {Array} nodes        节点集合
+         * @param {Object} selectedNode 被选中的节点
+         */
+        function addToNodes(nodes, selectedNode) {
+          // 已经添加到右侧的的节点名字
+          var added = nodes.map(function (node) { return node.name });
+          
+          console.log('added:', added);
+          console.log('selectedNode:', selectedNode.name);
+          
+          var index = added.indexOf(selectedNode.name);
+          
+          if (index !== -1) {
+            // 已存在的新的覆盖老的
+            nodes[index] = selectedNode;
+          } else { // 不存在正常添加
+            nodes.push(selectedNode);
+          }
+        }
 
     </script>
 </body>
