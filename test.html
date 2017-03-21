@@ -163,9 +163,6 @@
                 onClick: function (event, treeId, treeNode) {
                     zTree = $.fn.zTree.getZTreeObj("menu_tree_right");
                 },
-                beforeRemove: function(treeId, treeNode) {
-                    console.log('beforeRemove', treeId, treeNode);
-                },
                 onRemove: function (_, treeId, treeNode) {
                     rNodes = rNodes.filter(function (node) {
                       return node.name !== treeNode.name;
