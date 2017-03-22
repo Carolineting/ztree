@@ -208,11 +208,8 @@
             var nodeSelected=leftTree.getSelectedNodes()[0];
             if (!nodeSelected) return;
 
-            addToNodes(rNodes, nodeSelected);
-
-            rNodes = rNodes.map(function (node) {
-                return $.extend({}, node, { children: [] });
-            });
+            // 删除选中节点的子节点，不影响选中节点，所以用了 extend，且它的第一个参数是 {}
+            addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
