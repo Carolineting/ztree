@@ -205,10 +205,10 @@
 
         function addnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
-            var nodesSelected=leftTree.getSelectedNodes()[0];
-            if (!nodesSelected) return;
+            var nodeSelected=leftTree.getSelectedNodes()[0];
+            if (!nodeSelected) return;
 
-            addToNodes(rNodes, nodesSelected);
+            addToNodes(rNodes, nodeSelected);
 
             rNodes = rNodes.map(function (node) {
                 return $.extend({}, node, { children: [] });
@@ -217,10 +217,10 @@
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
             $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
-//         $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(nodesSelected,true,true,true);
+//         $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(nodeSelected,true,true,true);
 
 
-            if(nodesSelected){
+            if(nodeSelected){
                 $('.ztree li a.curSelectedNode').css({'color':'gray'});
             }
             //checkbox的状态控制
