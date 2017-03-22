@@ -8,6 +8,8 @@
     <link rel="stylesheet" type="text/css" href="css/mycss.css">
     <!-- 解决兼容性问题 IE8也可以使用ES5的新方法-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
+    <script src="http://cdn.bootcss.com/lodash.js/4.17.4/lodash.min.js"></script>
+
     <script type="text/javascript" src="js/jquery-1.12.4.js"></script>
     <script type="text/javascript" src="js/jquery.ztree.core.min.js"></script>
     <script type="text/javascript" src="js/jquery.ztree.excheck.min.js"></script>
@@ -162,23 +164,38 @@
 //                    console.log('beforeRemove', treeId, treeNode);
                 },
                 onRemove: function (_, treeId, treeNode) {
-//                  遍历rNodes，不等于被删除节点的才保留
-                    rNodes = rNodes.filter(function (node) {
-                        return node.id !== treeNode.id;
-                        node.style.color='black';
+                    var displayingNodes = $.fn.zTree.getZTreeObj("menu_tree_right").getNodesByFilter(function (node) {
+                      return !node.isHidden;
                     });
-//                  如果删除的是父节点，在rNodes中保留 不等于被删除的孩子
-                    if(treeNode.children!==''&& treeNode.children!== null && treeNode.children!==undefined){
-                        for(var i=0;i<treeNode.children.length;i++){
-                            rNodes=rNodes.filter(function(node){
-                                return node.id !== treeNode.children[i].id
-                            });
-                        }
-                    }
 
+                    // 删除 displayingNodes 的 children
+                    rNodes = displayingNodes.map(function (node) {
+                      return $.extend({}, node, { children: [] });
+                    });
+                
+                    $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
                 }
             }
         };
+        
+        // 从一个数上删除一颗
+        function remove(tree, subtree) {
+          ;
+        }
+        
+        function getAllChildren(node, cb) {
+            var nodes = [];
+
+            if (!cb) cb = function (n) { return n; };
+
+            node.children && node.children.forEach(function (child) {
+              nodes.push(cb(child));
+
+              nodes = nodes.concat(getAllChildren(child, cb));
+            });
+
+            return nodes;
+        }
 
         var zNodes = [
             { id:1, pId:0, name:"湖南省公安厅"},
@@ -196,7 +213,7 @@
         $(document).ready(function(){
             // 初始化 left tree,得到leftTree对象
             $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
-//          $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
+         // $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
 
         });
 
@@ -207,9 +224,9 @@
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var nodeSelected=leftTree.getSelectedNodes()[0];
             if (!nodeSelected) return;
-
+            
             // 删除选中节点的子节点，不影响选中节点，所以用了 extend，且它的第一个参数是 {}
-            addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
+            rNodes = addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
@@ -241,8 +258,11 @@
             if (!(leftSelectedNode.isParent)){
                 $('#addAll').attr('disabled',true);
             }
+            
+            console.log('rNodes before add:', rNodes);
+            rNodes = addToNodes(rNodes, leftSelectedNode);
 
-            addToNodes(rNodes, leftSelectedNode);
+            console.log('rNodes after add:', rNodes);
 
 //          $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(leftSelectedNode,false,true,true);
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
@@ -268,27 +288,27 @@
             }
         }
 
-
-        /**
-         * 把选中的节点加入 Nodes
-         * 该函数会改变入参 Nodes
-         * @param {Array} nodes         节点集合
-         * @param {Object} selectedNode 被选中的节点
-         */
         function addToNodes(nodes, selectedNode) {
-            // 已经添加到右侧的的节点名字
-            var added = nodes.map(function (node) { return node.name });
-            console.log('added:', added);
-            console.log('selectedNode:', selectedNode.name);
+            var children = getAllChildren(selectedNode);
+            var nodesToAdd = children.concat(selectedNode);
+            
+            var nodesToAddWithoutChildren = [];
 
-            var index = added.indexOf(selectedNode.name);
-
-            if (index !== -1) {
-                // 已存在的新的覆盖老的
-                nodes[index] = selectedNode;
-            } else { // 不存在正常添加
-                nodes.push(selectedNode);
+            // 删除 children
+            for (var i = 0; i < nodesToAdd.length; i++) {
+                if (nodesToAdd[i].children) {
+                    nodesToAddWithoutChildren.push($.extend({}, nodesToAdd[i], { children: [] }));
+                } else {
+                    nodesToAddWithoutChildren.push(nodesToAdd[i]);
+                }
             }
+            
+            // https://lodash.com/docs#unionBy
+            var nodesAfterAdded = _.unionBy(nodesToAddWithoutChildren, nodes, function (node) {
+              return node.name;
+            });
+
+            return nodesAfterAdded;
         }
 
 		
