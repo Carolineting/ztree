@@ -6,6 +6,8 @@
     <link rel="stylesheet" type="text/css" href="css/demo.css">
     <link rel="stylesheet" type="text/css" href="css/zTreeStyle/zTreeStyle.css">
     <link rel="stylesheet" type="text/css" href="css/mycss.css">
+    <!-- 解决兼容性问题 IE8也可以使用ES5的新方法-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
     <script type="text/javascript" src="js/jquery-1.12.4.js"></script>
     <script type="text/javascript" src="js/jquery.ztree.core.min.js"></script>
     <script type="text/javascript" src="js/jquery.ztree.excheck.min.js"></script>
@@ -44,10 +46,9 @@
                 <tr>
                     <td >正文：<span>*</span></td>
                     <td>
-                        <div>
-                            <textarea name="content" rows="10" style="border:0;width:100%;resize: none;"></textarea>
+                        <div style="margin-bottom:0;height:152px">
+                            <textarea name="content" rows="10" style="border:0;width:100%;padding:0;resize: none;overflow:hidden"></textarea>
                         </div>
-
                     </td>
                 </tr>
                 <tr>
@@ -110,12 +111,13 @@
     <script>
 
         function showmodel(){
-            var model=document.getElementsByClassName('model')[0];
-            model.style.display='block';
+ //           IE8不支持此方法
+//            var model=document.getElementsByClassName('model')[0];
+//            model.style.display='block';
+            $('.model').css('display','block');
         }
         function closemodel(){
-            var model=document.getElementsByClassName('model')[0];
-            model.style.display='none';
+            $('.model').css('display','none');
         }
 
         var settingLeft = {
@@ -130,11 +132,6 @@
                 showIcon: false,//是否显示图标
                 fontCss: { 'color': '#354a5e' },//字体样式函数
                 selectedMulti: false //设置是否允许同时选中多个节点
-            },
-            callback:{
-                onClick: function (event, treeId, treeNode) {
-                    zTree = $.fn.zTree.getZTreeObj("menu_tree_left");
-                }
             }
         };
 
@@ -160,13 +157,25 @@
                 showRenameBtn: false
             },
             callback:{
-                onClick: function (event, treeId, treeNode) {
-                    zTree = $.fn.zTree.getZTreeObj("menu_tree_right");
+
+                beforeRemove: function(treeId, treeNode) {
+//                    console.log('beforeRemove', treeId, treeNode);
                 },
                 onRemove: function (_, treeId, treeNode) {
+//                  遍历rNodes，不等于被删除节点的才保留
                     rNodes = rNodes.filter(function (node) {
-                      return node.name !== treeNode.name;
+                        return node.id !== treeNode.id;
+                        node.style.color='black';
                     });
+//                  如果删除的是父节点，在rNodes中保留 不等于被删除的孩子
+                    if(treeNode.children!==''&& treeNode.children!== null && treeNode.children!==undefined){
+                        for(var i=0;i<treeNode.children.length;i++){
+                            rNodes=rNodes.filter(function(node){
+                                return node.id !== treeNode.children[i].id
+                            });
+                        }
+                    }
+
                 }
             }
         };
@@ -190,6 +199,10 @@
 //          $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
 
         });
+
+
+
+
         function addnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var nodesSelected=leftTree.getSelectedNodes()[0];
@@ -203,11 +216,11 @@
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
-           $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
+            $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
 //         $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(nodesSelected,true,true,true);
-            
 
-            if(nodesSelected.isParent){
+
+            if(nodesSelected){
                 $('.ztree li a.curSelectedNode').css({'color':'gray'});
             }
             //checkbox的状态控制
@@ -215,47 +228,76 @@
             if(rightTree.getNodes()!=[]){
                 $(':checkbox').attr("checked",false);
                 $(':checkbox').click(function(){
-                  $.fn.zTree.init($("#menu_tree_right"), settingRight,[]);
-                  $.fn.zTree.init($("#menu_tree_left"), settingLeft,zNodes);
+                    rNodes=[];
+                    $.fn.zTree.init($("#menu_tree_right"), settingRight,rNodes);
+                    $.fn.zTree.init($("#menu_tree_left"), settingLeft,zNodes);
                 });
             }
         }
 
-        
+
         function addAllnodes() {
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var leftSelectedNode = leftTree.getSelectedNodes()[0];
-            
+
             if (!leftSelectedNode) return;
             if (!(leftSelectedNode.isParent)){
                 $('#addAll').attr('disabled',true);
             }
-            
-            
+
             addToNodes(rNodes, leftSelectedNode);
 
 //          $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(leftSelectedNode,false,true,true);
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
             $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
-            if(leftSelectedNode.isParent){
+            if(leftSelectedNode){
                 $('.ztree li a.curSelectedNode').css({'color':'gray'});
+//                if(leftSelectedNode.children!==''&& leftSelectedNode.children!== null && leftSelectedNode.children!==undefined){
+//                    for(var i=0;i<leftSelectedNode.children.length;i++){
+//
+//                    }
+//                }
             }
             //checkbox的状态控制
             var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
             if(rightTree.getNodes()!=[]){
                 $(':checkbox').attr("checked",false);
                 $(':checkbox').click(function(){
-                    $.fn.zTree.init($("#menu_tree_right"), settingRight, []);
+                    rNodes=[];
+                    $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
                     $.fn.zTree.init($("#menu_tree_left"), settingLeft, zNodes);
                 });
             }
         }
 
-        
-        $('#ensure').click(function(){
-            closemodel();
-            var a=[],b=[],c=[]
+
+        /**
+         * 把选中的节点加入 Nodes
+         * 该函数会改变入参 Nodes
+         * @param {Array} nodes         节点集合
+         * @param {Object} selectedNode 被选中的节点
+         */
+        function addToNodes(nodes, selectedNode) {
+            // 已经添加到右侧的的节点名字
+            var added = nodes.map(function (node) { return node.name });
+            console.log('added:', added);
+            console.log('selectedNode:', selectedNode.name);
+
+            var index = added.indexOf(selectedNode.name);
+
+            if (index !== -1) {
+                // 已存在的新的覆盖老的
+                nodes[index] = selectedNode;
+            } else { // 不存在正常添加
+                nodes.push(selectedNode);
+            }
+        }
+
+		
+		$('#ensure').click(function(){
+			closemodel();
+            var a=[],b=[],c=[];
             for(var i=0;i<rNodes.length;i++){
                 a.push(rNodes[i].name);
                 console.log(a);
@@ -266,7 +308,6 @@
                             for(var k=0;k<rNodes[i].children[j].children.length;k++){
                                 c.push(rNodes[i].children[j].children[k].name);
                                 console.log(c);
-
                             }
                         }
                     }
@@ -274,31 +315,34 @@
             }
             var total = a.concat(b,c);
             $('#receiver').val(total);
-        });
-        
-        /**
-         * 把选中的节点加入 Nodes
-         * 注意该函数会改变入参 Nodes 
-         * @param {Array} nodes        节点集合
-         * @param {Object} selectedNode 被选中的节点
-         */
-        function addToNodes(nodes, selectedNode) {
-          // 已经添加到右侧的的节点名字
-          var added = nodes.map(function (node) { return node.name });
-          
-          console.log('added:', added);
-          console.log('selectedNode:', selectedNode.name);
-          
-          var index = added.indexOf(selectedNode.name);
-          
-          if (index !== -1) {
-            // 已存在的新的覆盖老的
-            nodes[index] = selectedNode;
-          } else { // 不存在正常添加
-            nodes.push(selectedNode);
-          }
-        }
+		});
 
+//        解决IE8 placeholder不兼容的问题
+        if( !('placeholder' in document.createElement('input')) ){
+
+            $('input[placeholder],textarea[placeholder]').each(function(){
+                var that = $(this),
+                        text= that.attr('placeholder');
+                if(that.val()===""){
+                    that.val(text).addClass('placeholder');
+                }
+                that.focus(function(){
+                    if(that.val()===text){
+                        that.val("").removeClass('placeholder');
+                    }
+                })
+                .blur(function(){
+                    if(that.val()===""){
+                        that.val(text).addClass('placeholder');
+                    }
+                })
+                .closest('form').submit(function(){
+                    if(that.val() === text){
+                        that.val('');
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>
