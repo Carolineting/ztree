@@ -225,6 +225,8 @@
             var nodeSelected=leftTree.getSelectedNodes()[0];
             if (!nodeSelected) return;
             
+            $('#addAll').attr('disabled', false);
+            
             // 删除选中节点的子节点，不影响选中节点，所以用了 extend，且它的第一个参数是 {}
             addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
 
@@ -254,9 +256,16 @@
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var leftSelectedNode = leftTree.getSelectedNodes()[0];
 
+            console.log('leftSelectedNode:', leftSelectedNode);
+            
             if (!leftSelectedNode) return;
+            
+            $('#addAll').attr('disabled', false);
+            
             if (!(leftSelectedNode.isParent)){
                 $('#addAll').attr('disabled',true);
+
+                return;
             }
             
             // console.log('rNodes before add:', rNodes);
