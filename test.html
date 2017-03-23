@@ -134,8 +134,24 @@
                 showIcon: false,//是否显示图标
                 fontCss: { 'color': '#354a5e' },//字体样式函数
                 selectedMulti: false //设置是否允许同时选中多个节点
+            },
+            callback: {
+                onExpand: function (event, treeId, treeNode) {
+                    // console.log('treeNode:', treeNode);
+
+                    markColor(treeNode, treeNode.added ? 'gray' : 'black');
+
+                    walkChildren(treeNode, function (child) {
+                        markColor(child, child.added ? 'gray' : 'black');
+                    })
+                }
             }
         };
+
+        function markColor(node, color) {
+            console.log('mark %s as %s', node.name, color);
+            $('#menu_tree_left a').filter('[title=' + node.name + ']').css('color', color);
+        }
 
 
         var rNodes=[];
@@ -159,39 +175,60 @@
                 showRenameBtn: false
             },
             callback:{
-
                 beforeRemove: function(treeId, treeNode) {
 //                    console.log('beforeRemove', treeId, treeNode);
                 },
                 onRemove: function (_, treeId, treeNode) {
-                    var displayingNodes = $.fn.zTree.getZTreeObj("menu_tree_right").getNodesByFilter(function (node) {
+                    var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
+                    var removedNodes = getAllChildren(treeNode).concat(treeNode);
+
+                    // console.log('treeNode:', treeNode.name, treeNode.tId, treeNode);
+                    
+                    var nameNode = $('#menu_tree_left .node_name').filter(":contains('" + treeNode.name + "')");
+                    nameNode.closest('li').find('a').css('color', 'black');
+
+                    // console.log('nameNode:', nameNode);
+
+        
+                    var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
+                    // 做标记，左侧展开时要用
+                    removedNodes.forEach(function (node) {
+                        leftTree.getNodeByParam('name', node.name).added = false;
+                    });
+
+                    // console.log('removedNodes:', removedNodes);
+
+                    var remainingNodes = rightTree.getNodesByFilter(function (node) {
                       return !node.isHidden;
                     });
 
-                    // 删除 displayingNodes 的 children
-                    rNodes = displayingNodes.map(function (node) {
+                    // console.log('remainingNodes:', remainingNodes);
+
+                    // 删除 remainingNodes 的 children
+                    rNodes = remainingNodes.map(function (node) {
                       return $.extend({}, node, { children: [] });
                     });
                 
                     $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
-                }
+                },
             }
         };
-        
-        // 从一个数上删除一颗
-        function remove(tree, subtree) {
-          ;
+
+        function walkChildren(tree, cb) {
+          tree.children && tree.children.forEach(function (child) {
+            cb(child);
+
+            walkChildren(child, cb);
+          });
         }
-        
+
         function getAllChildren(node, cb) {
             var nodes = [];
 
             if (!cb) cb = function (n) { return n; };
-
-            node.children && node.children.forEach(function (child) {
+            
+            walkChildren(node, function (child) {
               nodes.push(cb(child));
-
-              nodes = nodes.concat(getAllChildren(child, cb));
             });
 
             return nodes;
@@ -236,9 +273,7 @@
 //         $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(nodeSelected,true,true,true);
 
 
-            if(nodeSelected){
-                $('.ztree li a.curSelectedNode').css({'color':'gray'});
-            }
+            $('.ztree li a.curSelectedNode').css({'color':'gray'});
             //checkbox的状态控制
             var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
             if(rightTree.getNodes()!=[]){
@@ -256,14 +291,14 @@
             var leftTree = $.fn.zTree.getZTreeObj("menu_tree_left");
             var leftSelectedNode = leftTree.getSelectedNodes()[0];
 
-            console.log('leftSelectedNode:', leftSelectedNode);
+            // console.log('leftSelectedNode:', leftSelectedNode);
             
             if (!leftSelectedNode) return;
-            
+
             $('#addAll').attr('disabled', false);
             
             if (!(leftSelectedNode.isParent)){
-                $('#addAll').attr('disabled',true);
+                $('#addAll').attr('disabled', true);
 
                 return;
             }
@@ -277,14 +312,19 @@
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
             $.fn.zTree.getZTreeObj("menu_tree_right").expandAll(true);
-            if(leftSelectedNode){
-                $('.ztree li a.curSelectedNode').css({'color':'gray'});
-//                if(leftSelectedNode.children!==''&& leftSelectedNode.children!== null && leftSelectedNode.children!==undefined){
-//                    for(var i=0;i<leftSelectedNode.children.length;i++){
-//
-//                    }
-//                }
-            }
+            
+            // 自己和所有的子孙节点也变灰色
+            $self = $('.ztree li a.curSelectedNode');
+            $self.css({'color': 'gray'});
+            $self.parent('li').find('a').css({'color': 'gray'});
+
+            // 
+            // if(leftSelectedNode.children!==''&& leftSelectedNode.children!== null && leftSelectedNode.children!==undefined){
+            //     for(var i=0;i<leftSelectedNode.children.length;i++){
+
+            //     }
+            // }
+
             //checkbox的状态控制
             var rightTree = $.fn.zTree.getZTreeObj("menu_tree_right");
             if(rightTree.getNodes()!=[]){
@@ -307,23 +347,25 @@
               return n.name;
             });
 
-            console.log('addedNodeNames:', addedNodeNames);
-            console.log('nodesToAdd:', nodesToAdd.map((n) => n.name));
+            // console.log('addedNodeNames:', addedNodeNames);
+            // console.log('nodesToAdd:', nodesToAdd.map((n) => n.name));
 
             nodesToAdd.forEach(function (node) {
                 // 不存在的才添加
                 if (addedNodeNames.indexOf(node.name) === -1) {
                     // 删除 children
+                    node.added = true;
                     nodes.push(node.children ? $.extend({}, node, { children: [] }) : node);
                 }
             });
 
             // 根据 _id 排序
-            console.log('before sort:', nodes.map((n) => n.name + ': ' + n._id)); 
+            // console.log('before sort:', nodes.map((n) => n.name + ': ' + n._id)); 
             nodes.sort(function (a, b) {
               return a._id - b._id;
             });
-            console.log('after sort:', nodes.map((n) => n.name + ': ' + n._id)); 
+            
+            // console.log('after sort:', nodes.map((n) => n.name + ': ' + n._id)); 
         }
 
 		
