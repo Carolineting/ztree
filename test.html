@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="css/mycss.css">
     <!-- 解决兼容性问题 IE8也可以使用ES5的新方法-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
-    <script src="http://cdn.bootcss.com/lodash.js/4.17.4/lodash.min.js"></script>
+    <!-- <script src="http://cdn.bootcss.com/lodash.js/4.17.4/lodash.min.js"></script> -->
 
     <script type="text/javascript" src="js/jquery-1.12.4.js"></script>
     <script type="text/javascript" src="js/jquery.ztree.core.min.js"></script>
@@ -198,16 +198,16 @@
         }
 
         var zNodes = [
-            { id:1, pId:0, name:"湖南省公安厅"},
-            { id:11, pId:1, name:"长沙市公安局"},
-            { id:111, pId:11, name:"雨花分局"},
-            { id:112, pId:11, name:"芙蓉分局"},
-            { id:21, pId:1, name:"株洲市公安局"},
-            { id:211, pId:21, name:"芦淞区分局"},
-            { id:212, pId:21, name:"荷塘区分局"},
-            { id:31, pId:1, name:"湘潭市公安局"},
-            { id:311, pId:31, name:"雨湖分局"},
-            { id:311, pId:31, name:"岳塘分局"},
+            { id:1, pId:0, name:"湖南省公安厅", _id: 0},
+            { id:11, pId:1, name:"长沙市公安局", _id: 1},
+            { id:111, pId:11, name:"雨花分局", _id: 2},
+            { id:112, pId:11, name:"芙蓉分局", _id: 3},
+            { id:21, pId:1, name:"株洲市公安局", _id: 4},
+            { id:211, pId:21, name:"芦淞区分局", _id: 5},
+            { id:212, pId:21, name:"荷塘区分局", _id: 6},
+            { id:31, pId:1, name:"湘潭市公安局", _id: 7},
+            { id:311, pId:31, name:"雨湖分局", _id: 8},
+            { id:311, pId:31, name:"岳塘分局", _id: 9},
 
         ];
         $(document).ready(function(){
@@ -226,7 +226,7 @@
             if (!nodeSelected) return;
             
             // 删除选中节点的子节点，不影响选中节点，所以用了 extend，且它的第一个参数是 {}
-            rNodes = addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
+            addToNodes(rNodes, $.extend({}, nodeSelected, { children: [] }));
 
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
             // 自动展开
@@ -259,10 +259,10 @@
                 $('#addAll').attr('disabled',true);
             }
             
-            console.log('rNodes before add:', rNodes);
-            rNodes = addToNodes(rNodes, leftSelectedNode);
+            // console.log('rNodes before add:', rNodes);
+            addToNodes(rNodes, leftSelectedNode);
 
-            console.log('rNodes after add:', rNodes);
+            // console.log('rNodes after add:', rNodes);
 
 //          $.fn.zTree.getZTreeObj("menu_tree_right").expandNode(leftSelectedNode,false,true,true);
             $.fn.zTree.init($("#menu_tree_right"), settingRight, rNodes);
@@ -294,21 +294,27 @@
             
             var nodesToAddWithoutChildren = [];
 
-            // 删除 children
-            for (var i = 0; i < nodesToAdd.length; i++) {
-                if (nodesToAdd[i].children) {
-                    nodesToAddWithoutChildren.push($.extend({}, nodesToAdd[i], { children: [] }));
-                } else {
-                    nodesToAddWithoutChildren.push(nodesToAdd[i]);
-                }
-            }
-            
-            // https://lodash.com/docs#unionBy
-            var nodesAfterAdded = _.unionBy(nodesToAddWithoutChildren, nodes, function (node) {
-              return node.name;
+            var addedNodeNames = nodes.map(function (n) {
+              return n.name;
             });
 
-            return nodesAfterAdded;
+            console.log('addedNodeNames:', addedNodeNames);
+            console.log('nodesToAdd:', nodesToAdd.map((n) => n.name));
+
+            nodesToAdd.forEach(function (node) {
+                // 不存在的才添加
+                if (addedNodeNames.indexOf(node.name) === -1) {
+                    // 删除 children
+                    nodes.push(node.children ? $.extend({}, node, { children: [] }) : node);
+                }
+            });
+
+            // 根据 _id 排序
+            console.log('before sort:', nodes.map((n) => n.name + ': ' + n._id)); 
+            nodes.sort(function (a, b) {
+              return a._id - b._id;
+            });
+            console.log('after sort:', nodes.map((n) => n.name + ': ' + n._id)); 
         }
 
 		
